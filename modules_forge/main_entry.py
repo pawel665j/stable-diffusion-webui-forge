@@ -165,7 +165,7 @@ def refresh_models():
 
 
 def ui_refresh_memory_management_settings(model_memory, async_loading, pin_shared_memory):
-    """ Passes precalculated 'model_memory' from "GPU Weights" UI slider (skip redundant calculation) """
+    """Передаёт предварительно рассчитанное значение 'model_memory' из ползунка 'GPU Weights' (пропускает избыточные вычисления)"""
     refresh_memory_management_settings(
         async_loading=async_loading,
         pin_shared_memory=pin_shared_memory,
@@ -173,12 +173,12 @@ def ui_refresh_memory_management_settings(model_memory, async_loading, pin_share
     )
 
 def refresh_memory_management_settings(async_loading=None, inference_memory=None, pin_shared_memory=None, model_memory=None):
-    # Fallback to defaults if values are not passed
+    # Возврат к значениям по умолчанию, если значения не переданы
     async_loading = async_loading if async_loading is not None else shared.opts.forge_async_loading
     inference_memory = inference_memory if inference_memory is not None else shared.opts.forge_inference_memory
     pin_shared_memory = pin_shared_memory if pin_shared_memory is not None else shared.opts.forge_pin_shared_memory
 
-    # If model_memory is provided, calculate inference memory accordingly, otherwise use inference_memory directly
+    # Если model_memory предоставлено, вычисляем inference memory соответственно, иначе используем inference memory напрямую
     if model_memory is None:
         model_memory = total_vram - inference_memory
     else:
@@ -198,20 +198,20 @@ def refresh_memory_management_settings(async_loading=None, inference_memory=None
         pin_shared_memory=memory_management.PIN_SHARED_MEMORY
     )
 
-    print(f'Environment vars changed: {log_dict}')
+    print(f'Переменные окружения изменены: {log_dict}')
 
     if inference_memory < min(512, total_vram * 0.05):
         print('------------------')
-        print(f'[Low VRAM Warning] You just set Forge to use 100% GPU memory ({model_memory:.2f} MB) to load model weights.')
-        print('[Low VRAM Warning] This means you will have 0% GPU memory (0.00 MB) to do matrix computation. Computations may fallback to CPU or go Out of Memory.')
-        print('[Low VRAM Warning] In many cases, image generation will be 10x slower.')
-        print("[Low VRAM Warning] To solve the problem, you can set the 'GPU Weights' (on the top of page) to a lower value.")
-        print("[Low VRAM Warning] If you cannot find 'GPU Weights', you can click the 'all' option in the 'UI' area on the left-top corner of the webpage.")
-        print('[Low VRAM Warning] Make sure that you know what you are testing.')
+        print(f'[Предупреждение о малом VRAM] Вы только что настроили Forge на использование 100% памяти GPU ({model_memory:.2f} MB) для загрузки весов модели.')
+        print('[Предупреждение о малом VRAM] Это означает, что у вас останется 0% памяти GPU (0.00 MB) для выполнения матричных вычислений. Вычисления могут переключиться на CPU или произойти ошибка Out of Memory.')
+        print('[Предупреждение о малом VRAM] Во многих случаях генерация изображений будет в 10 раз медленнее.')
+        print("[Предупреждение о малом VRAM] Чтобы решить проблему, вы можете установить значение 'GPU Weights' (в верхней части страницы) на меньшее значение.")
+        print("[Предупреждение о малом VRAM] Если вы не видите 'GPU Weights', нажмите на опцию 'all' в области 'UI' в левом верхнем углу веб-страницы.")
+        print('[Предупреждение о малом VRAM] Убедитесь, что вы понимаете, что именно вы тестируете.')
         print('------------------')
     else:
         compute_percentage = (inference_memory / total_vram) * 100.0
-        print(f'[GPU Setting] You will use {(100 - compute_percentage):.2f}% GPU memory ({model_memory:.2f} MB) to load weights, and use {compute_percentage:.2f}% GPU memory ({inference_memory:.2f} MB) to do matrix computation.')
+        print(f'[Настройка GPU] Вы будете использовать {(100 - compute_percentage):.2f}% памяти GPU ({model_memory:.2f} MB) для загрузки весов и {compute_percentage:.2f}% памяти GPU ({inference_memory:.2f} MB) для выполнения матричных вычислений.')
 
     processing.need_global_unload = True
     return
@@ -240,7 +240,7 @@ def refresh_model_loading_parameters():
 
 
 def checkpoint_change(ckpt_name:str, save=True, refresh=True):
-    """ checkpoint name can be a number of valid aliases. Returns True if checkpoint changed. """
+    """Имя контрольной точки может быть указано в различных допустимых форматах. Возвращает True, если контрольная точка изменилась."""
     new_ckpt_info = sd_models.get_closet_checkpoint_match(ckpt_name)
     current_ckpt_info = sd_models.get_closet_checkpoint_match(shared.opts.data.get('sd_model_checkpoint', ''))
     if new_ckpt_info == current_ckpt_info:
@@ -256,14 +256,14 @@ def checkpoint_change(ckpt_name:str, save=True, refresh=True):
 
 
 def modules_change(module_values:list, save=True, refresh=True) -> bool:
-    """ module values may be provided as file paths, or just the module names. Returns True if modules changed. """
+    """Значения модулей могут быть указаны как пути к файлам или просто имена модулей. Возвращает True, если модули изменились."""
     modules = []
     for v in module_values:
-        module_name = os.path.basename(v) # If the input is a filepath, extract the file name
+        module_name = os.path.basename(v) # Если входные данные являются путем к файлу, извлекаем имя файла
         if module_name in module_list:
             modules.append(module_list[module_name])
     
-    # skip further processing if value unchanged
+    # пропустить дальнейшую обработку, если значение не изменилось
     if sorted(modules) == sorted(shared.opts.data.get('forge_additional_modules', [])):
         return False
 

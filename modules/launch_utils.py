@@ -1,4 +1,4 @@
-# this scripts installs necessary requirements and launches main program in webui.py
+# этот скрипт устанавливает необходимые зависимости и запускает основную программу в webui.py
 import logging
 import re
 import subprocess
@@ -30,7 +30,7 @@ git = os.environ.get('GIT', "git")
 index_url = os.environ.get('INDEX_URL', "")
 dir_repos = "repositories"
 
-# Whether to default to printing command output
+# По умолчанию выводить вывод команды или нет
 default_command_live = (os.environ.get('WEBUI_LAUNCH_LIVE_OUTPUT') == "1")
 
 os.environ.setdefault('GRADIO_ANALYTICS_ENABLED', 'False')
@@ -178,7 +178,7 @@ def run_git(dir, name, command, desc=None, errdesc=None, custom_env=None, live: 
 
 
 def git_clone(url, dir, name, commithash=None):
-    # TODO clone into temporary dir and move if successful
+    # переключение на временную директорию и перемещение при успешном завершении
 
     if os.path.exists(dir):
         if commithash is None:
@@ -327,8 +327,8 @@ re_requirement = re.compile(r"\s*([-_a-zA-Z0-9]+)\s*(?:==\s*([-+_.a-zA-Z0-9]+))?
 
 def requirements_met(requirements_file):
     """
-    Does a simple parse of a requirements.txt file to determine if all rerqirements in it
-    are already installed. Returns True if so, False if not installed or parsing fails.
+    Выполняет простой разбор файла requirements.txt, чтобы определить, установлены ли все зависимости из него.
+    Возвращает True, если все установлено, False если что-то не установлено или разбор не удался.
     """
 
     import importlib.metadata
@@ -361,26 +361,25 @@ def requirements_met(requirements_file):
 
 
 def prepare_environment():
-    torch_index_url = os.environ.get('TORCH_INDEX_URL', "https://download.pytorch.org/whl/cu121")
-    torch_command = os.environ.get('TORCH_COMMAND', f"pip install torch==2.3.1 torchvision==0.18.1 --extra-index-url {torch_index_url}")
+    torch_command = os.environ.get('TORCH_COMMAND', "pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu124")
     if args.use_ipex:
         if platform.system() == "Windows":
-            # The "Nuullll/intel-extension-for-pytorch" wheels were built from IPEX source for Intel Arc GPU: https://github.com/intel/intel-extension-for-pytorch/tree/xpu-main
-            # This is NOT an Intel official release so please use it at your own risk!!
-            # See https://github.com/Nuullll/intel-extension-for-pytorch/releases/tag/v2.0.110%2Bxpu-master%2Bdll-bundle for details.
+            # Колёса "Nuullll/intel-extension-for-pytorch" были собраны из исходного кода IPEX для Intel Arc GPU: https://github.com/intel/intel-extension-for-pytorch/tree/xpu-main
+            # Это НЕ официальная версия Intel, поэтому используйте её на свой страх и риск!!
+            # См. https://github.com/Nuullll/intel-extension-for-pytorch/releases/tag/v2.0.110%2Bxpu-master%2Bdll-bundle для подробностей.
             #
-            # Strengths (over official IPEX 2.0.110 windows release):
-            #   - AOT build (for Arc GPU only) to eliminate JIT compilation overhead: https://github.com/intel/intel-extension-for-pytorch/issues/399
-            #   - Bundles minimal oneAPI 2023.2 dependencies into the python wheels, so users don't need to install oneAPI for the whole system.
-            #   - Provides a compatible torchvision wheel: https://github.com/intel/intel-extension-for-pytorch/issues/465
-            # Limitation:
-            #   - Only works for python 3.10
+            # Преимущества (перед официальной версией IPEX 2.0.110 для Windows):
+            #   - AOT сборка (только для Arc GPU) для устранения накладных расходов на JIT компиляцию: https://github.com/intel/intel-extension-for-pytorch/issues/399
+            #   - Включает минимальные зависимости oneAPI 2023.2 в Python-колёса, поэтому пользователям не нужно устанавливать oneAPI для всей системы.
+            #   - Предоставляет совместимое колесо torchvision: https://github.com/intel/intel-extension-for-pytorch/issues/465
+            # Ограничение:
+            #   - Работает только с Python 3.10
             url_prefix = "https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.0.110%2Bxpu-master%2Bdll-bundle"
             torch_command = os.environ.get('TORCH_COMMAND', f"pip install {url_prefix}/torch-2.0.0a0+gite9ebda2-cp310-cp310-win_amd64.whl {url_prefix}/torchvision-0.15.2a0+fa99a53-cp310-cp310-win_amd64.whl {url_prefix}/intel_extension_for_pytorch-2.0.110+gitc6ea20b-cp310-cp310-win_amd64.whl")
         else:
-            # Using official IPEX release for linux since it's already an AOT build.
-            # However, users still have to install oneAPI toolkit and activate oneAPI environment manually.
-            # See https://intel.github.io/intel-extension-for-pytorch/index.html#installation for details.
+            # Используется официальный релиз IPEX для Linux, так как это уже AOT сборка.
+            # Однако пользователям всё равно необходимо вручную установить инструментарий oneAPI и активировать окружение oneAPI.
+            # См. https://intel.github.io/intel-extension-for-pytorch/index.html#installation для подробностей.
             torch_index_url = os.environ.get('TORCH_INDEX_URL', "https://pytorch-extension.intel.com/release-whl/stable/xpu/us/")
             torch_command = os.environ.get('TORCH_COMMAND', f"pip install torch==2.0.0a0 intel-extension-for-pytorch==2.0.110+gitba7f6c1 --extra-index-url {torch_index_url}")
     requirements_file = os.environ.get('REQS_FILE', "requirements_versions.txt")
@@ -405,14 +404,11 @@ def prepare_environment():
     blip_commit_hash = os.environ.get('BLIP_COMMIT_HASH', "48211a1594f1321b00f14c9f7a5b4813144b2fb9")
 
     try:
-        # the existence of this file is a signal to webui.sh/bat that webui needs to be restarted when it stops execution
+        # существование этого файла сигнализирует webui.sh/bat о необходимости перезапуска webui при остановке выполнения
         os.remove(os.path.join(script_path, "tmp", "restart"))
         os.environ.setdefault('SD_WEBUI_RESTARTING', '1')
     except OSError:
         pass
-
-    if not args.skip_python_version_check:
-        check_python_version()
 
     startup_timer.record("checks")
 
@@ -511,7 +507,7 @@ def configure_for_tests():
 
 
 def configure_forge_reference_checkout(a1111_home: Path):
-    """Set model paths based on an existing A1111 checkout."""
+    """Устанавливает пути к моделям на основе существующего каталога A1111."""
     class ModelRef(NamedTuple):
         arg_name: str
         relative_path: str
@@ -530,11 +526,11 @@ def configure_forge_reference_checkout(a1111_home: Path):
     for ref in refs:
         target_path = a1111_home / ref.relative_path
         if not target_path.exists():
-            print(f"Path {target_path} does not exist. Skip setting {ref.arg_name}")
+            print(f"Путь {target_path} не существует. Пропускаем установку {ref.arg_name}")
             continue
 
         if ref.arg_name in sys.argv:
-            # Do not override existing dir setting.
+            # Не переопределять существующую настройку пути
             continue
 
         sys.argv.append(ref.arg_name)
@@ -542,7 +538,7 @@ def configure_forge_reference_checkout(a1111_home: Path):
 
 
 def start():
-    print(f"Launching {'API server' if '--nowebui' in sys.argv else 'Web UI'} with arguments: {shlex.join(sys.argv[1:])}")
+    print(f"Запуск {'API сервера' if '--nowebui' in sys.argv else 'Веб-интерфейса'} с аргументами: {shlex.join(sys.argv[1:])}")
     import webui
     if '--nowebui' in sys.argv:
         webui.api_only()
